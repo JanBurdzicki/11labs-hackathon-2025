@@ -1,2 +1,5 @@
 elevenlabs
 python-dotenv
+openai-whisper
+numpy
+sounddevice
