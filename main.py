@@ -13,7 +13,6 @@ app = FastAPI()
 AGENT_ID = os.getenv("AGENT_ID")
 API_KEY = os.getenv("ELEVENLABS_API_KEY")
 
-# Sprawdzanie, czy wymagane zmienne środowiskowe są ustawione
 if not AGENT_ID:
     raise HTTPException(status_code=400, detail="AGENT_ID environment variable must be set")
 
@@ -58,6 +57,22 @@ def end_session():
         return {"message": "Session ended", "conversation_id": conversation_id}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to end session: {str(e)}")
+
+@app.post("/update_agent")
+def update_agent(prompt: str, first_message: str):
+    try:
+        response = client.update_agent(
+            agent_id=AGENT_ID,
+            prompt=prompt,
+            first_message=first_message
+        )
+        
+        if response.get("status") == "success":
+            return {"message": "Agent updated successfully"}
+        else:
+            raise HTTPException(status_code=400, detail="Failed to update agent")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update agent: {str(e)}")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
