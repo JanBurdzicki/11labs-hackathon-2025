@@ -43,6 +43,12 @@
         <textarea id="textInput" placeholder="Wpisz tekst do konwersji..."></textarea>
         <button onclick="convertToSpeech()">Konwertuj na mowę</button>
         <audio id="audioPlayer" controls></audio>
+        
+        <h2>Webhook Data</h2>
+        <textarea id="patientInfo" placeholder="Informacje o pacjencie"></textarea>
+        <textarea id="caseStudy" placeholder="Case study"></textarea>
+        <textarea id="lastMessage" placeholder="Ostatnia wiadomość"></textarea>
+        <button onclick="sendWebhook()">Wyślij do Webhook</button>
     </div>
 
     <script>
@@ -77,6 +83,44 @@
                 
                 audioPlayer.src = audioUrl;
                 await audioPlayer.play();
+            } catch (error) {
+                console.error('Error:', error);
+                alert(`Wystąpił błąd: ${error.message}`);
+            }
+        }
+
+        async function sendWebhook() {
+            const webhookData = {
+                patient: document.getElementById('patientInfo').value,
+                case_study: document.getElementById('caseStudy').value,
+                history: [
+                    {
+                        type: "user",
+                        message: "Sample user message"
+                    },
+                    {
+                        type: "patient",
+                        message: "Sample patient message"
+                    }
+                ],
+                last_message: document.getElementById('lastMessage').value
+            };
+
+            try {
+                const response = await fetch(' https://n8n.remedium.md/webhook-test/e62fd279-e228-4fae-bdde-44881c81d7cc', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(webhookData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Błąd podczas wysyłania');
+                }
+
+                alert('Dane zostały wysłane pomyślnie!');
             } catch (error) {
                 console.error('Error:', error);
                 alert(`Wystąpił błąd: ${error.message}`);

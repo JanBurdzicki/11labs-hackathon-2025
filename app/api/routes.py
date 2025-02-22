@@ -3,6 +3,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional
 import io
+import httpx
 
 from app.services.tts import TTSService
 
@@ -14,6 +15,12 @@ class TTSRequest(BaseModel):
     voice_id: Optional[str] = None
     model_id: Optional[str] = None
     output_format: Optional[str] = None
+
+class WebhookData(BaseModel):
+    patient: str
+    case_study: str
+    history: list[dict]
+    last_message: str
 
 @router.post("/tts")
 async def text_to_speech(request: TTSRequest):
@@ -41,3 +48,16 @@ async def text_to_speech(request: TTSRequest):
         media_type='audio/mpeg',
         headers={'Content-Disposition': 'attachment; filename="speech.mp3"'}
     )
+
+@router.post("/webhook")
+async def send_webhook(data: WebhookData):
+    webhook_url = "https://n8n.remedium.md/webhook-test/e62fd279-e228-4fae-bdde-44881c81d7cc"
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(webhook_url, json=data.dict())
+            if response.status_code != 200:
+                raise HTTPException(status_code=500, detail="Webhook request failed")
+        return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
