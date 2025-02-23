@@ -90,11 +90,14 @@ export default function PatientChatPage() {
 
   // Funkcja do odczytu tekstu przez TTS
   const speakText = (text: string) => {
+    console.log("Speaking:", text);
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "en-US"; // ustaw język na angielski
+    // Anulujemy poprzednie wypowiedzi przed rozpoczęciem nowej
+    window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
   };
-
+  
   // Przy każdej nowej wiadomości od asystenta, odczytujemy ją na głos
   useEffect(() => {
     if (messages.length > 0) {
@@ -104,7 +107,7 @@ export default function PatientChatPage() {
       }
     }
   }, [messages]);
-
+  
   /**
    * Obsługa wysłania wiadomości przez użytkownika (lekarza).
    */
