@@ -5,84 +5,213 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Text to Speech</title>
     <style>
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4CAF50;
+            --danger: #dc3545;
+            --dark: #2C3E50;
+            --light: #F8F9FA;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: var(--dark);
         }
+
         .container {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
         }
+
+        h1, h2 {
+            color: var(--dark);
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
         textarea {
-            height: 100px;
-            padding: 10px;
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+            resize: vertical;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
         }
+
+        textarea:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.2);
+        }
+
         button {
-            padding: 10px 20px;
-            background-color: #007bff;
+            padding: 12px 24px;
+            background-color: var(--primary);
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 8px;
             cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow);
         }
+
         button:hover {
-            background-color: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+            background-color: #5851ff;
         }
+
+        .record-button-container {
+            width: 150px;
+            height: 150px;
+            margin: 3rem auto;
+        }
+
+        .record-button {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: var(--primary);
+            box-shadow: 0 6px 16px rgba(108, 99, 255, 0.3);
+        }
+
+        .record-button:hover {
+            transform: scale(1.05) translateY(-2px);
+            box-shadow: 0 8px 20px rgba(108, 99, 255, 0.4);
+        }
+
+        .record-button.recording {
+            background: var(--danger);
+            box-shadow: 0 6px 16px rgba(220, 53, 69, 0.3);
+        }
+
+        .record-button i {
+            font-size: 48px;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .wave-container {
+            bottom: 20px;
+            height: 40px;
+        }
+
+        .wave-bar {
+            width: 3px;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
         #audioPlayer {
             width: 100%;
-            margin-top: 20px;
+            margin: 2rem 0;
+            border-radius: 8px;
+            background: var(--light);
         }
+
         .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+            background: var(--light);
+            padding: 2rem;
+            border-radius: 12px;
+            margin-top: 2rem;
+            box-shadow: var(--shadow);
         }
+
         label {
-            font-weight: bold;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+            display: block;
         }
-        .microphone-btn {
-            font-size: 24px;
-            background: none;
-            border: none;
-            cursor: pointer;
+
+        @keyframes wave {
+            0%, 100% { height: 3px; }
+            50% { height: 20px; }
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.6); }
+            70% { box-shadow: 0 0 0 20px rgba(220, 53, 69, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+        }
+
+        .section {
+            margin: 3rem 0;
+            padding: 2rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
         }
     </style>
+    <!-- Add Font Awesome for microphone icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <div class="container">
-        <h1>Text to Speech Converter</h1>
-        <textarea id="textInput" placeholder="Enter text to convert..."></textarea>
-        <button onclick="convertToSpeech()">Convert to Speech</button>
-        <audio id="audioPlayer" controls></audio>
+        <h1>Voice Assistant</h1>
         
-        <h2>Webhook Data</h2>
-        <form method="POST" action="/api/webhook_form">
-            <div class="form-group">
-                <label for="patientInfo">Patient Information:</label>
-                <textarea id="patientInfo" name="patient" placeholder="Enter patient information"></textarea>
-    
-                <label for="caseStudy">Case Study:</label>
-                <textarea id="caseStudy" name="case_study" placeholder="Enter case study"></textarea>
-    
-                <label for="userMessage">User Message:</label>
-                <textarea id="userMessage" name="user_message" placeholder="Enter user message"></textarea>
-    
-                <label for="patientMessage">Patient Message:</label>
-                <textarea id="patientMessage" name="patient_message" placeholder="Enter patient message"></textarea>
-    
-                <label for="lastMessage">Last Message:</label>
-                <textarea id="lastMessage" name="last_message" placeholder="Enter last message"></textarea>
-    
-                <button type="submit">Send to Webhook</button>
+        <div class="section">
+            <div class="record-button-container">
+                <button id="whisperBtn" class="record-button">
+                    <i class="fas fa-microphone"></i>
+                    <div class="wave-container">
+                        <div class="wave-bar" style="--i: 1"></div>
+                        <div class="wave-bar" style="--i: 2"></div>
+                        <div="wave-bar" style="--i: 3"></div>
+                        <div class="wave-bar" style="--i: 4"></div>
+                        <div class="wave-bar" style="--i: 5"></div>
+                        <div class="wave-bar" style="--i: 6"></div>
+                        <div class="wave-bar" style="--i: 7"></div>
+                        <div class="wave-bar" style="--i: 8"></div>
+                    </div>
+                </button>
             </div>
-        </form>
+        </div>
+
+        <div class="section">
+            <h2>Text to Speech</h2>
+            <textarea id="textInput" placeholder="Type something to convert to speech..."></textarea>
+            <button onclick="convertToSpeech()">Convert to Speech</button>
+            <audio id="audioPlayer" controls></audio>
+        </div>
+
+        <div class="section">
+            <h2>Webhook Data</h2>
+            <form method="POST" action="/api/webhook_form">
+                <div class="form-group">
+                    <label for="patientInfo">Patient Information:</label>
+                    <textarea id="patientInfo" name="patient" placeholder="Enter patient information"></textarea>
+        
+                    <label for="caseStudy">Case Study:</label>
+                    <textarea id="caseStudy" name="case_study" placeholder="Enter case study"></textarea>
+        
+                    <label for="userMessage">User Message:</label>
+                    <textarea id="userMessage" name="user_message" placeholder="Enter user message"></textarea>
+        
+                    <label for="patientMessage">Patient Message:</label>
+                    <textarea id="patientMessage" name="patient_message" placeholder="Enter patient message"></textarea>
+        
+                    <label for="lastMessage">Last Message:</label>
+                    <textarea id="lastMessage" name="last_message" placeholder="Enter last message"></textarea>
+        
+                    <button type="submit">Send to Webhook</button>
+                </div>
+            </form>
+        </div>
         <!-- New button to test webhook TTS -->
         <button onclick="playWebhookTTSAudio()">Play Webhook TTS (Hello)</button>
-        <!-- New button to record audio via MediaRecorder -->
-        <button id="whisperBtn">Record & Send (OpenAI Whisper)</button>
     </div>
 
     <script>
@@ -183,6 +312,8 @@
         let audioChunks = [];
 
         const whisperBtn = document.getElementById('whisperBtn');
+        const waveContainer = document.querySelector('.wave-container');
+        
         whisperBtn.addEventListener('click', async () => {
             if (!mediaRecorder || mediaRecorder.state === "inactive") {
                 // Request mic access & start recording
@@ -195,16 +326,22 @@
                             audioChunks.push(event.data);
                         }
                     };
-                    mediaRecorder.onstop = sendAudioToWhisper;
+                    mediaRecorder.onstop = () => {
+                        whisperBtn.classList.remove('recording');
+                        sendAudioToWhisper();
+                    };
+                    mediaRecorder.onstart = () => {
+                        whisperBtn.classList.add('recording');
+                    };
                     mediaRecorder.start();
-                    whisperBtn.textContent = "Stop Recording";
+                    whisperBtn.querySelector('i').className = 'fas fa-stop';
                 } catch (err) {
                     alert("Microphone access error: " + err);
                 }
             } else {
                 // Stop recording
                 mediaRecorder.stop();
-                whisperBtn.textContent = "Record & Send (OpenAI Whisper)";
+                whisperBtn.querySelector('i').className = 'fas fa-microphone';
             }
         });
 
