@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Form
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional
@@ -6,6 +6,7 @@ import io
 import httpx
 
 from app.services.tts import TTSService
+from app.core.config import settings
 
 router = APIRouter()
 tts_service = TTSService()
@@ -49,15 +50,40 @@ async def text_to_speech(request: TTSRequest):
         headers={'Content-Disposition': 'attachment; filename="speech.mp3"'}
     )
 
-@router.post("/webhook")
-async def send_webhook(data: WebhookData):
-    webhook_url = "https://n8n.remedium.md/webhook-test/e62fd279-e228-4fae-bdde-44881c81d7cc"
+@router.post("/webhook_form")
+async def send_webhook_form(
+    patient: str = Form(...),
+    case_study: str = Form(...),
+    user_message: str = Form(...),
+    patient_message: str = Form(...),
+    last_message: str = Form(...)
+):
+    # Convert form data into the expected WebhookData structure
+    data = {
+        "patient": patient,
+        "case_study": case_study,
+        "history": [
+            {"type": "user", "message": user_message},
+            {"type": "patient", "message": patient_message}
+        ],
+        "last_message": last_message
+    }
+    
+    webhook_url = settings.WEBHOOK_URL
+    print(webhook_url)
     
     try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(webhook_url, json=data.dict())
-            if response.status_code != 200:
-                raise HTTPException(status_code=500, detail="Webhook request failed")
+        async with httpx.AsyncClient(follow_redirects=True) as client:
+            response = await client.post(webhook_url, json=data)
+            response.raise_for_status()  # raises an exception for non-2xx responses
         return {"status": "success"}
+    except httpx.HTTPError as http_err:
+        # Log the HTTP error properly instead of printing debug remnants.
+        print(f"Webhook HTTP error: {http_err}") 
+        raise HTTPException(status_code=500, detail=f"Webhook HTTP error: {http_err}")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {e}")
+
+@router.get("/config")
+async def get_config():
+    return {"webhook_url": settings.WEBHOOK_URL}
