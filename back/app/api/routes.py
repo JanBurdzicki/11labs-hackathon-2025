@@ -54,51 +54,39 @@ async def text_to_speech(request: TTSRequest):
 
 @router.post("/webhook_form")
 async def send_webhook_form(data: WebhookData):
-    webhook_url = settings.WEBHOOK_URL
-    if not webhook_url:
-        raise HTTPException(status_code=500, detail="Webhook URL not configured")
-
-    print(f"Sending webhook to: {webhook_url}")
-    print(f"Payload: {data.dict()}")
-    
+    """
+    Przyjmujemy w całości JSON pasujący do WebhookData:
+    {
+      "patient": "Imię i nazwisko",
+      "case_study": "Opis przypadku",
+      "history": [
+        {"type": "user", "message": "..."},
+        {"type": "patient", "message": "..."}
+      ],
+      "last_message": "..."
+    }
+    """
+    # Przygotowujemy dane do wysłania do "właściwego" webhooka:
     payload = {
         "patient": data.patient,
-        "case-study": data.case_study,
-        "history": [{"type": item["type"], "message": item["message"]} for item in data.history],
+        "case-study": data.case_study,   # Uwaga: w oryginale klucz był "case-study", jeśli webhook oczekuje myślnika
+        "history": [
+            {"type": h.type, "message": h.message} for h in data.history
+        ],
         "last-message": data.last_message
     }
     
+    webhook_url = settings.WEBHOOK_URL
     try:
         async with httpx.AsyncClient() as client:
-            print(f"Sending POST request to {webhook_url}")
-            response = await client.post(
-                webhook_url, 
-                json=payload,
-                headers={
-                    "Content-Type": "application/json",
-                    "Accept": "application/json"
-                }
-            )
-            print(f"Response status: {response.status_code}")
-            print(f"Response body: {response.text}")
-            
-            if response.status_code == 405:
-                raise HTTPException(
-                    status_code=500, 
-                    detail="Webhook endpoint does not allow POST method. Please check the webhook URL and allowed methods."
-                )
-            
-            response.raise_for_status()
+            response = await client.post(webhook_url, json=payload)
+            response.raise_for_status()  # wyrzuci wyjątek dla kodu 4xx/5xx
             return response.json()
-            
-    except httpx.HTTPStatusError as http_err:
-        error_msg = f"HTTP error occurred: {http_err.response.status_code} - {http_err.response.text}"
-        print(error_msg)
-        raise HTTPException(status_code=http_err.response.status_code, detail=error_msg)
+    except httpx.HTTPError as http_err:
+        print(f"Webhook HTTP error: {http_err}")
+        raise HTTPException(status_code=500, detail=f"Webhook HTTP error: {http_err}")
     except Exception as e:
-        error_msg = f"Unexpected error: {str(e)}"
-        print(error_msg)
-        raise HTTPException(status_code=500, detail=error_msg)
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {e}")
 
 @router.post("/webhook_tts")
 async def webhook_tts():
