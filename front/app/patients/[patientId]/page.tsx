@@ -415,7 +415,6 @@ Could you help me figure out what I should do next?
               <p className="mb-1">Weight: 45 kg</p>
               <p className="mb-1">Height: 165 cm</p>
               <p className="mb-1">Allergies: Penicillin</p>
-              <p className="mb-1">Last Check-Up: 2023-08-10</p>
               <p className="mt-3 text-sm text-slate-400">
                 Additional notes: <br />
                 Patient has mild hypertension. Monitor blood pressure regularly
