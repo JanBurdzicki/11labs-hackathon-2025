@@ -181,166 +181,124 @@ export default function PatientChatPage() {
   };
 
   return (
-    <main className="flex h-screen w-full max-w-3xl flex-col items-center mx-auto">
-      {/* Nagłówek z ID pacjenta */}
-      <h1 className="text-2xl font-bold mb-4">Chat with Patient {patientId}</h1>
+    <div className="flex min-h-screen items-center justify-center p-4">
+      <main className="flex h-[85vh] w-full max-w-7xl flex-col bg-slate-900 rounded-xl border border-slate-800">
+        {/* Nagłówek z ID pacjenta */}
+        <h1 className="text-2xl font-bold p-4 text-white border-b border-slate-800">Chat with Patient {patientId}</h1>
 
-      {/* Lista wiadomości */}
-      <div className="flex-1 w-full overflow-y-auto py-6" ref={messagesRef}>
-        <ChatMessageList>
-          {/* Pierwszy komunikat powitalny, gdy brak wiadomości */}
-          {messages.length === 0 && (
-            <div className="w-full bg-background shadow-sm border rounded-lg p-8 flex flex-col gap-2">
-              <h1 className="font-bold">Welcome to this example app.</h1>
-              <p className="text-muted-foreground text-sm">
-                This is a simple Next.JS example application created using{" "}
-                <a
-                  href="https://github.com/jakobhoeg/shadcn-chat"
-                  className="font-bold inline-flex flex-1 justify-center gap-1 leading-4 hover:underline"
-                >
-                  shadcn-chat
-                  <svg
-                    aria-hidden="true"
-                    height="7"
-                    viewBox="0 0 6 6"
-                    width="7"
-                    className="opacity-70"
-                  >
-                    <path
-                      d="M1.25215 5.54731L0.622742 4.9179L3.78169 1.75597H1.3834L1.38936 0.890915H5.27615V4.78069H4.40513L4.41109 2.38538L1.25215 5.54731Z"
-                      fill="currentColor"
-                    ></path>
-                  </svg>
-                </a>{" "}
-                components. It uses{" "}
-                <a
-                  href="https://sdk.vercel.ai/"
-                  className="font-bold inline-flex flex-1 justify-center gap-1 leading-4 hover:underline"
-                >
-                  Vercel AI SDK
-                  <svg
-                    aria-hidden="true"
-                    height="7"
-                    viewBox="0 0 6 6"
-                    width="7"
-                    className="opacity-70"
-                  >
-                    <path
-                      d="M1.25215 5.54731L0.622742 4.9179L3.78169 1.75597H1.3834L1.38936 0.890915H5.27615V4.78069H4.40513L4.41109 2.38538L1.25215 5.54731Z"
-                      fill="currentColor"
-                    ></path>
-                  </svg>
-                </a>{" "}
-                for the AI integration. Build chat interfaces like this at
-                lightspeed with shadcn-chat.
-              </p>
-              <p className="text-muted-foreground text-sm">
-                Make sure to also checkout the shadcn-chat support component at
-                the bottom right corner.
-              </p>
-            </div>
-          )}
-
-          {/* Właściwe wiadomości */}
-          {messages.map((message, index) => (
-            <ChatBubble
-              key={index}
-              variant={message.role === "user" ? "sent" : "received"}
-            >
-              <ChatBubbleAvatar
-                src=""
-                fallback={message.role === "user" ? "👨🏽" : "🤖"}
-              />
-              <ChatBubbleMessage>
-                {/* Obsługa markdown + bloków kodu */}
-                {message.content.split("```").map((part, i) => {
-                  // Co drugi fragment jest kodem
-                  const isCodeBlock = i % 2 !== 0;
-                  if (!isCodeBlock) {
-                    // Zwykły tekst
-                    return (
-                      <Markdown key={i} remarkPlugins={[remarkGfm]}>
-                        {part}
-                      </Markdown>
-                    );
-                  } else {
-                    // Fragment kodu
-                    return (
-                      <pre className="whitespace-pre-wrap pt-2" key={i}>
-                      </pre>
-                    );
+        {/* Lista wiadomości */}
+        <div className="flex-1 w-full overflow-y-auto py-4 px-4" ref={messagesRef}>
+          <ChatMessageList className="space-y-4">
+            {messages.map((message, index) => (
+              <ChatBubble
+                key={index}
+                variant={message.role === "user" ? "sent" : "received"}
+                className={`
+                  ${message.role === "user"
+                    ? "bg-indigo-600 ml-auto rounded-[20px]"
+                    : "bg-slate-800 mr-auto rounded-[20px]"
                   }
-                })}
+                  max-w-[80%] shadow-lg flex items-center
+                `}
+              >
+                <ChatBubbleAvatar
+                  src=""
+                  fallback={message.role === "user" ? "👨🏽" : "🤖"}
+                  className={`
+                    ${message.role === "user" ? "order-last ml-3" : "mr-3"}
+                    bg-slate-700 h-8 w-8 text-lg flex-shrink-0
+                  `}
+                />
+                <ChatBubbleMessage className="text-white px-4 py-2.5 flex-1">
+                  {/* Obsługa markdown + bloków kodu */}
+                  {message.content.split("```").map((part, i) => {
+                    // Co drugi fragment jest kodem
+                    const isCodeBlock = i % 2 !== 0;
+                    if (!isCodeBlock) {
+                      // Zwykły tekst
+                      return (
+                        <Markdown key={i} remarkPlugins={[remarkGfm]}>
+                          {part}
+                        </Markdown>
+                      );
+                    } else {
+                      // Fragment kodu
+                      return (
+                        <pre className="whitespace-pre-wrap pt-2" key={i}>
+                        </pre>
+                      );
+                    }
+                  })}
 
-                {/* Ikony "Copy"/"Refresh"/"Volume" przy ostatniej wiadomości asystenta */}
-                {message.role === "assistant" && messages.length - 1 === index && (
-                  <div className="flex items-center mt-1.5 gap-1">
-                    {!isGenerating &&
-                      ChatAiIcons.map((icon, iconIndex) => {
-                        const IconComp = icon.icon;
-                        return (
-                          <ChatBubbleAction
-                            variant="outline"
-                            className="size-5"
-                            key={iconIndex}
-                            icon={<IconComp className="size-3" />}
-                            onClick={() => handleActionClick(icon.label, index)}
-                          />
-                        );
-                      })}
-                  </div>
-                )}
-              </ChatBubbleMessage>
-            </ChatBubble>
-          ))}
+                  {/* Ikony "Copy"/"Refresh"/"Volume" przy ostatniej wiadomości asystenta */}
+                  {message.role === "assistant" && messages.length - 1 === index && (
+                    <div className="flex items-center mt-1.5 gap-1">
+                      {!isGenerating &&
+                        ChatAiIcons.map((icon, iconIndex) => {
+                          const IconComp = icon.icon;
+                          return (
+                            <ChatBubbleAction
+                              variant="outline"
+                              className="size-5"
+                              key={iconIndex}
+                              icon={<IconComp className="size-3" />}
+                              onClick={() => handleActionClick(icon.label, index)}
+                            />
+                          );
+                        })}
+                    </div>
+                  )}
+                </ChatBubbleMessage>
+              </ChatBubble>
+            ))}
 
-          {/* Gdy generuje się nowa odpowiedź, pokaż "isLoading" */}
-          {isGenerating && (
-            <ChatBubble variant="received">
-              <ChatBubbleAvatar src="" fallback="🤖" />
-              <ChatBubbleMessage isLoading />
-            </ChatBubble>
-          )}
-        </ChatMessageList>
-      </div>
+            {isGenerating && (
+              <ChatBubble variant="received" className="bg-slate-800 mr-auto rounded-[20px] max-w-[80%] shadow-lg flex items-center">
+                <ChatBubbleAvatar src="" fallback="🤖" className="mr-3 bg-slate-700 h-8 w-8 text-lg flex-shrink-0" />
+                <ChatBubbleMessage isLoading className="text-white px-4 py-2.5 flex-1" />
+              </ChatBubble>
+            )}
+          </ChatMessageList>
+        </div>
 
-      {/* Pole do wpisywania wiadomości na dole */}
-      <div className="w-full px-4 pb-4">
-        <form
-          ref={formRef}
-          onSubmit={onSubmit}
-          className="relative rounded-lg border bg-background focus-within:ring-1 focus-within:ring-ring"
-        >
-          <ChatInput
-            value={input}
-            onKeyDown={onKeyDown}
-            onChange={handleInputChange}
-            placeholder="Type your message here..."
-            className="rounded-lg bg-background border-0 shadow-none focus-visible:ring-0"
-          />
-          <div className="flex items-center p-3 pt-0">
-            <Button variant="ghost" size="icon">
-              <Paperclip className="size-4" />
+        {/* Bottom prompt box */}
+        <div className="w-full px-4 pb-4">
+          {/* Icons section */}
+          <div className="flex items-center gap-2 px-2 pb-2">
+            <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg">
+              <Paperclip className="size-5" />
               <span className="sr-only">Attach file</span>
             </Button>
-
-            <Button variant="ghost" size="icon">
-              <Mic className="size-4" />
+            <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg">
+              <Mic className="size-5" />
               <span className="sr-only">Use Microphone</span>
             </Button>
+          </div>
 
+          <form
+            ref={formRef}
+            onSubmit={onSubmit}
+            className="relative flex flex-col w-full border-0 bg-slate-800 shadow-[0_0_15px_rgba(0,0,0,0.3)] rounded-xl focus-within:ring-1 focus-within:ring-indigo-500"
+          >
+            <ChatInput
+              value={input}
+              onKeyDown={onKeyDown}
+              onChange={handleInputChange}
+              placeholder="Type your message here..."
+              className="min-h-[60px] w-full resize-none bg-transparent py-[10px] pl-4 pr-14 focus-visible:ring-0 text-white placeholder-slate-400 rounded-xl"
+            />
             <Button
               disabled={!input || isLoading}
               type="submit"
-              size="sm"
-              className="ml-auto gap-1.5"
+              size="icon"
+              className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 bg-indigo-600 hover:bg-indigo-700 text-white disabled:bg-slate-700/50 disabled:opacity-50 rounded-lg"
             >
-              Send Message
-              <CornerDownLeft className="size-3.5" />
+              <CornerDownLeft className="size-5" />
+              <span className="sr-only">Send Message</span>
             </Button>
-          </div>
-        </form>
-      </div>
-    </main>
+          </form>
+        </div>
+      </main>
+    </div>
   );
 }
