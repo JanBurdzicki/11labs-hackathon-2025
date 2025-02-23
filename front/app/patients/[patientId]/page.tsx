@@ -260,9 +260,9 @@ Could you help me figure out what I should do next?
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
+    <div className="flex items-center justify-center p-4">
       {/* Outer container */}
-      <main className="flex h-[85vh] w-full max-w-6xl flex-col bg-slate-900 rounded-xl border border-slate-800">
+      <main className="mt-6 flex h-[85vh] w-full max-w-6xl flex-col bg-slate-900 rounded-xl border border-slate-800">
         {/* Header (full width) */}
         <h1 className="text-2xl font-bold p-4 text-white border-b border-slate-800">
           Chat with patient
