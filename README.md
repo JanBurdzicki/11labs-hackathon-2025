@@ -13,6 +13,15 @@ The application helps you improve your diagnosis skills by talking (or chatting)
 * Next.js
 * Tailwind CSS
 
+## Images
+
+![medju](submission/img/img6.png)
+![medju](submission/img/img5.png)
+![medju](submission/img/img4.png)
+![medju](submission/img/img3.png)
+![medju](submission/img/img2.png)
+![medju](submission/img/img1.png)
+
 ## How to run
 
 1. Clone the repository
