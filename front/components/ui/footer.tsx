@@ -86,14 +86,14 @@ export default function Footer() {
                   About us
                 </a>
               </li>
-              <li>
+              {/* <li>
                 <a
                   className="text-indigo-200/65 transition hover:text-indigo-500"
                   href="#0"
                 >
                   Diversity &amp; Inclusion
                 </a>
-              </li>
+              </li> */}
               <li>
                 <a
                   className="text-indigo-200/65 transition hover:text-indigo-500"
@@ -110,14 +110,14 @@ export default function Footer() {
                   Careers
                 </a>
               </li>
-              <li>
+              {/* <li>
                 <a
                   className="text-indigo-200/65 transition hover:text-indigo-500"
                   href="#0"
                 >
                   Financial statements
                 </a>
-              </li>
+              </li> */}
             </ul>
           </div>
           {/* 3rd block */}
@@ -205,7 +205,7 @@ export default function Footer() {
             </div>
             <div className="text-sm">
               <p className="mb-3 text-indigo-200/65">
-                © Cruip.com
+                © NAZWA.com
                 <span className="text-gray-700"> · </span>
                 <a
                   className="text-indigo-200/65 transition hover:text-indigo-500"

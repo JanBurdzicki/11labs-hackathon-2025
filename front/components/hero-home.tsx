@@ -13,7 +13,7 @@ export default function HeroHome() {
               className="animate-[gradient_6s_linear_infinite] bg-[linear-gradient(to_right,var(--color-gray-200),var(--color-indigo-200),var(--color-gray-50),var(--color-indigo-300),var(--color-gray-200))] bg-[length:200%_auto] bg-clip-text pb-5 font-nacelle text-4xl font-semibold text-transparent md:text-5xl"
               data-aos="fade-up"
             >
-              AI Agents to help prepare for work as a doctor. 
+                NAZWA: Your Smartest Way to Prepare for Clinical Practice
             </h1>
             <div className="mx-auto max-w-3xl">
               <p
@@ -21,8 +21,8 @@ export default function HeroHome() {
                 data-aos="fade-up"
                 data-aos-delay={200}
               >
-                Get ready to work with patients! <br/>
-                With us, you will start your work prepared for anything and without stress! 
+                Master real-world patient care with our AI agent! <br/>
+                Boost confidence and reduce stress before stepping into the hospital!
               </p>
               {/* <div className="mx-auto max-w-xs sm:flex sm:max-w-none sm:justify-center">
                 <div data-aos="fade-up" data-aos-delay={400}>
