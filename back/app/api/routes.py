@@ -53,43 +53,52 @@ async def text_to_speech(request: TTSRequest):
     )
 
 @router.post("/webhook_form")
-async def send_webhook_form(
-    patient: str = Form(...),
-    case_study: str = Form(...),
-    user_message: str = Form(...),
-    patient_message: str = Form(...),
-    last_message: str = Form(...)
-):
-    # Convert form data into the expected WebhookData structure
-    data = {
-        "patient": patient,
-        "case-study": case_study,
-        "history": [
-            {"type": "user", "message": user_message},
-            {"type": "patient", "message": patient_message}
-        ],
-        "last-message": last_message
-    }
-    
+async def send_webhook_form(data: WebhookData):
     webhook_url = settings.WEBHOOK_URL
-    # print(webhook_url)
+    if not webhook_url:
+        raise HTTPException(status_code=500, detail="Webhook URL not configured")
+
+    print(f"Sending webhook to: {webhook_url}")
+    print(f"Payload: {data.dict()}")
+    
+    payload = {
+        "patient": data.patient,
+        "case-study": data.case_study,
+        "history": [{"type": item["type"], "message": item["message"]} for item in data.history],
+        "last-message": data.last_message
+    }
     
     try:
         async with httpx.AsyncClient() as client:
-            # print(data)
-            response = await client.post(webhook_url, json=data)
-            response.raise_for_status()  # raises an exception for non-2xx responses
+            print(f"Sending POST request to {webhook_url}")
+            response = await client.post(
+                webhook_url, 
+                json=payload,
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                }
+            )
+            print(f"Response status: {response.status_code}")
+            print(f"Response body: {response.text}")
+            
+            if response.status_code == 405:
+                raise HTTPException(
+                    status_code=500, 
+                    detail="Webhook endpoint does not allow POST method. Please check the webhook URL and allowed methods."
+                )
+            
+            response.raise_for_status()
             return response.json()
-    except httpx.HTTPError as http_err:
-        # Log the HTTP error properly instead of printing debug remnants.
-        print(f"Webhook HTTP error: {http_err}") 
-        raise HTTPException(status_code=500, detail=f"Webhook HTTP error: {http_err}")
+            
+    except httpx.HTTPStatusError as http_err:
+        error_msg = f"HTTP error occurred: {http_err.response.status_code} - {http_err.response.text}"
+        print(error_msg)
+        raise HTTPException(status_code=http_err.response.status_code, detail=error_msg)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {e}")
-
-@router.get("/config")
-async def get_config():
-    return {"webhook_url": settings.WEBHOOK_URL}
+        error_msg = f"Unexpected error: {str(e)}"
+        print(error_msg)
+        raise HTTPException(status_code=500, detail=error_msg)
 
 @router.post("/webhook_tts")
 async def webhook_tts():
