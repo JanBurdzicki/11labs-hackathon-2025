@@ -88,3 +88,19 @@ async def send_webhook_form(
 @router.get("/config")
 async def get_config():
     return {"webhook_url": settings.WEBHOOK_URL}
+
+@router.post("/webhook_tts")
+async def webhook_tts():
+    # Simulate webhook POST that returns TTS audio of "hello"
+    audio, error = tts_service.generate_speech(text="hello")
+    if error:
+        raise HTTPException(status_code=500, detail=error)
+    if not audio:
+        raise HTTPException(status_code=500, detail="Failed to generate audio")
+    audio_io = io.BytesIO(audio)
+    audio_io.seek(0)
+    return StreamingResponse(
+        audio_io,
+        media_type='audio/mpeg',
+        headers={'Content-Disposition': 'attachment; filename="hello.mp3"'}
+    )

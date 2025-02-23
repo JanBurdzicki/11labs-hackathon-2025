@@ -73,6 +73,8 @@
                 <button type="submit">Send to Webhook</button>
             </div>
         </form>
+        <!-- New button to test webhook TTS -->
+        <button onclick="playWebhookTTSAudio()">Play Webhook TTS (Hello)</button>
     </div>
 
     <script>
@@ -105,6 +107,27 @@
                 const audioBlob = await response.blob();
                 const audioUrl = URL.createObjectURL(audioBlob);
                 
+                audioPlayer.src = audioUrl;
+                await audioPlayer.play();
+            } catch (error) {
+                console.error('Error:', error);
+                alert(`An error occurred: ${error.message}`);
+            }
+        }
+        
+        async function playWebhookTTSAudio() {
+            // New function: sends POST to /api/webhook_tts and plays the returned audio
+            const audioPlayer = document.getElementById('audioPlayer');
+            try {
+                const response = await fetch('/api/webhook_tts', {
+                    method: 'POST'
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Error in TTS webhook');
+                }
+                const audioBlob = await response.blob();
+                const audioUrl = URL.createObjectURL(audioBlob);
                 audioPlayer.src = audioUrl;
                 await audioPlayer.play();
             } catch (error) {
