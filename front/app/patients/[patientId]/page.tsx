@@ -23,6 +23,7 @@ import {
   Paperclip,
   RefreshCcw,
   Volume2,
+  StopCircle,
 } from "lucide-react";
 
 // Markdown (do obsługi bloczków kodu):
@@ -31,7 +32,7 @@ import remarkGfm from "remark-gfm";
 
 // ----- KONFIGURACJA ------------------------------------------------
 
-// Stały tekst pacjenta (wyświetlamy go w UI, ale nie wysyłamy do backendu):
+// Stały tekst pacjenta (wyświetlamy go w UI, ale nie wysyłamy do backendu)
 const PATIENT_MESSAGE = `
 Hello, I'm Anna Novak. I'm 63 years old and have been experiencing a mild cough for the past 5 days. 
 I also have a slight fever (around 37.8°C) and occasional headaches. I'm worried it might be the flu 
@@ -39,9 +40,8 @@ or something more serious. I also have mild hypertension, so I'm cautious about 
 Could you help me figure out what I should do next?
 `.trim();
 
-// Stały case study (wysyłany do backendu w polu `case_study` za każdym razem):
-const CASE_STUDY = PATIENT_MESSAGE; 
-// (Możesz dać identyczny tekst albo inny – w zależności od wymagań)
+// Stały case study (wysyłany do backendu w polu `case_study` za każdym razem)
+const CASE_STUDY = PATIENT_MESSAGE;
 
 // Typ wiadomości w stanie frontendu
 interface Message {
@@ -61,19 +61,9 @@ export default function PatientChatPage() {
   const patientName = "Anna Novak"; // demo
 
   // Stan czatu – zaczynamy od jednej wiadomości „pacjenta” tylko w UI
-  // W tym przykładzie rola pacjenta nie jest dalej wysyłana do backendu,
-  // więc używamy formy "assistant" / "user" – a pacjenta potraktujemy jako
-  // osobny, "statyczny" bąbelek (zrobimy go tylko do wyświetlenia).
-  //
-  // Inna opcja: dodać "patient" do typów i rozróżnić w UI.
-  // Na potrzeby przykładu wystarczy "assistant" / "user".
-  // Ale tutaj zrobimy "assistant" = pacjent, żeby mieć inny styl bąbelka niż user.
-  //
-  // Uwaga: jeśli wolisz wyróżnić to jako "patient", musisz dodać trzeci typ
-  //        i w stylach obsłużyć je podobnie do "assistant".
   const [messages, setMessages] = useState<Message[]>([
     {
-      role: "assistant", // tak stylujemy w UI na bąbelek po lewej
+      role: "assistant",
       content: PATIENT_MESSAGE,
     },
   ]);
@@ -82,6 +72,11 @@ export default function PatientChatPage() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // --- STANY do obsługi mikrofonu ---
+  const [isRecording, setIsRecording] = useState(false);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
 
   // Ref do scrollowania
   const messagesRef = useRef<HTMLDivElement>(null);
@@ -93,11 +88,25 @@ export default function PatientChatPage() {
     }
   }, [messages]);
 
+  // Funkcja do odczytu tekstu przez TTS
+  const speakText = (text: string) => {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-US"; // ustaw język na angielski
+    window.speechSynthesis.speak(utterance);
+  };
+
+  // Przy każdej nowej wiadomości od asystenta, odczytujemy ją na głos
+  useEffect(() => {
+    if (messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage.role === "assistant") {
+        speakText(lastMessage.content);
+      }
+    }
+  }, [messages]);
+
   /**
    * Obsługa wysłania wiadomości przez użytkownika (lekarza).
-   * - Dodajemy wiadomość "user" do stanu
-   * - Wysyłamy zapytanie do backendu: case_study + historia (user, assistant – ale bez tego „pacjenta” startowego)
-   * - Odbieramy odpowiedź i dodajemy do stanu jako "assistant"
    */
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -113,17 +122,11 @@ export default function PatientChatPage() {
     setIsGenerating(true);
 
     try {
-      // Filtrujemy historię tak, aby pominąć TYLKO bąbelek pacjenta „startowy”.
-      // Zakładamy, że to ten, który ma w content = PATIENT_MESSAGE.
-      // Albo sprawdzamy, że to jest `index === 0`.
-      //
-      // Jeśli wolisz, możesz w ogóle trzymać w state osobno "staticPatientMsg"
-      // i "messages" – wtedy nie musisz nic filtrować w fetchu.
+      // Pomijamy pierwszą wiadomość pacjenta (PATIENT_MESSAGE)
       const conversationForBackend = newMessages.filter(
-        (m) => m.content !== PATIENT_MESSAGE // pomijamy pacjenta startowego
+        (m) => m.content !== PATIENT_MESSAGE
       );
 
-      // Budujemy body:
       const requestBody = {
         patient: patientName,
         case_study: CASE_STUDY,
@@ -133,6 +136,7 @@ export default function PatientChatPage() {
         })),
         last_message: userMsg.content,
       };
+
       // Fetch do backendu
       const response = await fetch("http://172.20.10.5:8000/api/webhook_form", {
         method: "POST",
@@ -146,7 +150,6 @@ export default function PatientChatPage() {
       }
 
       const data = await response.json();
-      // Załóżmy, że mamy { status: "success", response: "Treść AI" }
       if (data.status === "error") {
         console.error("Błąd od AI (user submit):", data.response);
       } else {
@@ -166,12 +169,10 @@ export default function PatientChatPage() {
   };
 
   /**
-   * Funkcja "reload" – w razie potrzeby usuwa ostatnią wiadomość asystenta i ponawia zapytanie.
-   * (Przykład funkcji; jeśli nie używasz tej logiki, możesz ją usunąć.)
+   * Funkcja "reload" – usuwa ostatnią wiadomość asystenta i ponawia zapytanie
    */
   async function reload() {
-    if (messages.length < 2) return; // Nie ma co usuwać
-
+    if (messages.length < 2) return;
     setIsLoading(true);
     setIsGenerating(true);
 
@@ -179,8 +180,6 @@ export default function PatientChatPage() {
     const newMessages = messages.slice(0, -1);
 
     try {
-      // Ostatnia wypowiedź usera jest teraz newMessages[newMessages.length - 1].
-      // Filtrujemy, żeby pominąć pierwszą pacjenta, jeśli tam jest.
       const conversationForBackend = newMessages.filter(
         (m) => m.content !== PATIENT_MESSAGE
       );
@@ -228,12 +227,12 @@ export default function PatientChatPage() {
   }
 
   /**
-   * Gdy user naciśnie Enter (bez Shift) w polu tekstowym, wyślij wiadomość.
+   * Obsługa klawisza Enter
    */
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      if (isGenerating || isLoading || !input) return;
+      if (isGenerating || isLoading || !input.trim()) return;
       handleSubmit(e as unknown as React.FormEvent<HTMLFormElement>);
     }
   };
@@ -261,6 +260,66 @@ export default function PatientChatPage() {
     // "Volume" => TTS, itp.
   };
 
+  // ---------------------------------------------
+  // OBSŁUGA MIKROFONU
+  // ---------------------------------------------
+  const handleMicClick = async () => {
+    if (!isRecording) {
+      // Rozpoczynamy nagrywanie
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // Ustawiamy mimeType jawnie – to pomoże uzyskać plik z kodekiem opus
+        const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm; codecs=opus' });
+        setMediaRecorder(recorder);
+        setAudioChunks([]); // czyścimy poprzednie
+
+        recorder.start();
+        setIsRecording(true);
+
+        recorder.ondataavailable = (e) => {
+          if (e.data.size > 0) {
+            setAudioChunks((prev) => [...prev, e.data]);
+          }
+        };
+
+        recorder.onstop = async () => {
+          setIsRecording(false);
+
+          // Tworzymy Blob z zebranych kawałków
+          const blob = new Blob(audioChunks, { type: "audio/webm" });
+          setAudioChunks([]);
+
+          // Wysyłamy do backendu
+          const formData = new FormData();
+          formData.append("audio_file", blob, "recording.webm");
+
+          try {
+            const res = await fetch("http://172.20.10.5:8000/api/stt_whisper", {
+              method: "POST",
+              body: formData,
+            });
+            if (!res.ok) {
+              console.error("STT error", await res.text());
+              return;
+            }
+            const data = await res.json();
+            console.log("Transcribed text:", data.transcript);
+
+            // Wstawiamy transkrypcję do inputa
+            setInput(data.transcript || "");
+          } catch (err) {
+            console.error("STT fetch error:", err);
+          }
+        };
+      } catch (err) {
+        console.error("Mic error:", err);
+      }
+    } else {
+      // Jeśli nagrywamy, kliknięcie zatrzymuje nagrywanie
+      mediaRecorder?.stop();
+    }
+  };
+
   return (
     <div className="flex items-center justify-center p-4">
       <main className="mt-6 flex h-[85vh] w-full max-w-6xl flex-col bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
@@ -269,7 +328,7 @@ export default function PatientChatPage() {
         </h1>
 
         <div className="flex flex-1 overflow-y-hidden">
-        {/* LEFT: Chat Column */}
+          {/* LEFT: Chat Column */}
           <div className="flex flex-col w-7/10">
             <div
               ref={messagesRef}
@@ -279,7 +338,6 @@ export default function PatientChatPage() {
                 {messages.map((message, index) => (
                   <ChatBubble
                     key={index}
-                    // "assistant" => bąbelek 'received', "user" => 'sent'
                     variant={
                       message.role === "assistant" ? "received" : "sent"
                     }
@@ -349,6 +407,7 @@ export default function PatientChatPage() {
             {/* Chat Input Box */}
             <div className="w-full px-4 pb-4">
               <div className="flex items-center gap-2 px-2 pb-2">
+                {/* Przycisk "Attach file" */}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -357,13 +416,24 @@ export default function PatientChatPage() {
                   <Paperclip className="size-5" />
                   <span className="sr-only">Attach file</span>
                 </Button>
+
+                {/* Przycisk mikrofonu */}
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-9 w-9 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg"
+                  onClick={handleMicClick}
+                  className={`h-9 w-9 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg
+                    ${isRecording ? "text-red-400 animate-pulse" : ""}
+                  `}
                 >
-                  <Mic className="size-5" />
-                  <span className="sr-only">Use microphone</span>
+                  {!isRecording ? (
+                    <Mic className="size-5" />
+                  ) : (
+                    <StopCircle className="size-5" />
+                  )}
+                  <span className="sr-only">
+                    {isRecording ? "Stop recording" : "Use microphone"}
+                  </span>
                 </Button>
               </div>
 
@@ -374,14 +444,7 @@ export default function PatientChatPage() {
                 <ChatInput
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      if (!isGenerating && !isLoading && input.trim()) {
-                        handleSubmit(e as unknown as React.FormEvent<HTMLFormElement>);
-                      }
-                    }
-                  }}
+                  onKeyDown={onKeyDown}
                   placeholder="Type your message here..."
                   className="min-h-[60px] w-full resize-none bg-transparent py-[10px] pl-4 pr-14 text-white placeholder-slate-400 rounded-xl"
                 />
