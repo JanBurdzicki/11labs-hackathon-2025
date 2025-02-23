@@ -6,6 +6,5 @@ pydantic>=2.5.2
 pydantic-settings>=2.1.0
 python-multipart~=0.0.6
 openai-whisper
-numpy
 sounddevice
 httpx

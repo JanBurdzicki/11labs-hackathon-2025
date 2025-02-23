@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Form
+from fastapi import APIRouter, HTTPException, Form, File, UploadFile
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional
@@ -6,10 +6,12 @@ import io
 import httpx
 
 from app.services.tts import TTSService
+from app.services.stt import STTService
 from app.core.config import settings
 
 router = APIRouter()
 tts_service = TTSService()
+stt_service = STTService()
 
 class TTSRequest(BaseModel):
     text: str
@@ -104,3 +106,17 @@ async def webhook_tts():
         media_type='audio/mpeg',
         headers={'Content-Disposition': 'attachment; filename="hello.mp3"'}
     )
+
+@router.post("/stt_whisper")
+async def stt_whisper(audio_file: UploadFile = File(...)):
+    audio_bytes = await audio_file.read()
+    transcript, error = stt_service.transcribe_audio(audio_bytes)
+    
+    if error:
+        raise HTTPException(status_code=500, detail=f"Transcription error: {error}")
+    
+    if not transcript:
+        raise HTTPException(status_code=500, detail="Failed to transcribe audio")
+        
+    print("Transcribed:", transcript)
+    return {"status": "success", "transcript": transcript}

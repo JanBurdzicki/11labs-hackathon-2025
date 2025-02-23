@@ -43,6 +43,12 @@
         label {
             font-weight: bold;
         }
+        .microphone-btn {
+            font-size: 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -75,6 +81,8 @@
         </form>
         <!-- New button to test webhook TTS -->
         <button onclick="playWebhookTTSAudio()">Play Webhook TTS (Hello)</button>
+        <!-- New button to record audio via MediaRecorder -->
+        <button id="whisperBtn">Record & Send (OpenAI Whisper)</button>
     </div>
 
     <script>
@@ -133,6 +141,96 @@
             } catch (error) {
                 console.error('Error:', error);
                 alert(`An error occurred: ${error.message}`);
+            }
+        }
+
+        function startSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                alert("Speech Recognition API not supported in this browser.");
+                return;
+            }
+            const recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+            
+            recognition.onstart = () => {
+                console.log("Speech recognition started");
+            };
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                console.log("Recognized:", transcript);
+                fetch('/api/stt', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ transcript: transcript })
+                })
+                .then(response => response.json())
+                .then(data => console.log("Server response:", data))
+                .catch(error => console.error("Error sending transcript:", error));
+            };
+            recognition.onerror = (event) => {
+                console.error("Speech recognition error:", event.error);
+            };
+            recognition.onend = () => {
+                console.log("Speech recognition ended");
+            };
+            recognition.start();
+        }
+
+        let mediaRecorder;
+        let audioChunks = [];
+
+        const whisperBtn = document.getElementById('whisperBtn');
+        whisperBtn.addEventListener('click', async () => {
+            if (!mediaRecorder || mediaRecorder.state === "inactive") {
+                // Request mic access & start recording
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    audioChunks = [];
+                    mediaRecorder = new MediaRecorder(stream);
+                    mediaRecorder.ondataavailable = (event) => {
+                        if (event.data.size > 0) {
+                            audioChunks.push(event.data);
+                        }
+                    };
+                    mediaRecorder.onstop = sendAudioToWhisper;
+                    mediaRecorder.start();
+                    whisperBtn.textContent = "Stop Recording";
+                } catch (err) {
+                    alert("Microphone access error: " + err);
+                }
+            } else {
+                // Stop recording
+                mediaRecorder.stop();
+                whisperBtn.textContent = "Record & Send (OpenAI Whisper)";
+            }
+        });
+
+        async function sendAudioToWhisper() {
+            if (!audioChunks.length) {
+                console.error("No audio data collected");
+                return;
+            }
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            const formData = new FormData();
+            formData.append('audio_file', audioBlob, 'recording.webm');
+
+            try {
+                const response = await fetch('/api/stt_whisper', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Whisper transcription failed');
+                }
+                const data = await response.json();
+                console.log("Whisper transcript:", data.transcript);
+            } catch (error) {
+                console.error("Error uploading audio:", error);
+                alert("Error: " + error.message);
             }
         }
     </script>
