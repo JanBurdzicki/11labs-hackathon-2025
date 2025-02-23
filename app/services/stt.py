@@ -1,7 +1,8 @@
 import whisper
-import wave
 import tempfile
 import os
+import ffmpeg
+
 
 class STTService:
     def __init__(self, model_size="base"):
@@ -10,21 +11,27 @@ class STTService:
     def transcribe_audio(self, audio_bytes):
         """Transcribe audio from bytes."""
         try:
-            # Create a temporary WAV file
-            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_wav:
-                with wave.open(temp_wav.name, 'wb') as wf:
-                    wf.setnchannels(1)
-                    wf.setsampwidth(2)
-                    wf.setframerate(16000)
-                    wf.writeframes(audio_bytes)
+            # Create temporary files for both input and output
+            with tempfile.NamedTemporaryFile(suffix=".webm", delete=False) as temp_in, \
+                 tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_out:
                 
-                # Transcribe using the temporary file
-                result = self.model.transcribe(temp_wav.name)
+                # Write the input audio bytes
+                temp_in.write(audio_bytes)
+                temp_in.flush()
                 
-            # Clean up the temporary file
-            os.unlink(temp_wav.name)
-            
-            return result["text"], None
+                # Convert WebM to WAV using ffmpeg
+                stream = ffmpeg.input(temp_in.name)
+                stream = ffmpeg.output(stream, temp_out.name, acodec='pcm_s16le', ac=1, ar='16000')
+                ffmpeg.run(stream, capture_stdout=True, capture_stderr=True, overwrite_output=True)
+                
+                # Transcribe the converted WAV file
+                result = self.model.transcribe(temp_out.name)
+                
+                # Clean up temporary files
+                os.unlink(temp_in.name)
+                os.unlink(temp_out.name)
+                
+                return result["text"], None
                 
         except Exception as e:
             return None, str(e)
