@@ -26,7 +26,7 @@ export default function Workflows() {
               Our patients
             </h2>
             <p className="text-lg text-indigo-200/65">
-              Handpicked patients ensure the deepest learning experience.
+              Dive deep into learning with patients based on case studies.
             </p>
           </div>
           {/* Spotlight items */}
@@ -37,6 +37,12 @@ export default function Workflows() {
               href="/patients/1"
             >
               <div className="relative z-20 h-full overflow-hidden rounded-[inherit] bg-gray-950 after:absolute after:inset-0 after:bg-linear-to-br after:from-gray-900/50 after:via-gray-800/25 after:to-gray-900/50">
+                {/* Difficulty tag */}
+                <div className="absolute left-6 top-6 z-30">
+                  <span className="btn-sm bg-linear-to-t from-indigo-600 to-indigo-500 bg-[length:100%_100%] bg-[bottom] py-[5px] px-2.5 text-xs text-white shadow-[inset_0px_1px_0px_--theme(--color-white/.16)] hover:bg-[length:100%_150%] rounded-full">
+                    Intermediate
+                  </span>
+                </div>
                 {/* Arrow */}
                 <div
                   className="absolute right-6 top-6 flex h-8 w-8 items-center justify-center rounded-full border border-gray-700/50 bg-gray-800/65 text-gray-200 opacity-0 transition-opacity group-hover/card:opacity-100"
@@ -70,11 +76,6 @@ export default function Workflows() {
                         Psychiatric Disorders
                       </span>
                     </span>
-                    <span className="btn-sm relative rounded-full bg-gray-800/40 px-2.5 py-0.5 text-xs font-normal before:pointer-events-none before:absolute before:inset-0 before:rounded-[inherit] before:border before:border-transparent before:[background:linear-gradient(to_bottom,--theme(--color-gray-700/.15),--theme(--color-gray-700/.5))_border-box] before:[mask-composite:exclude_!important] before:[mask:linear-gradient(white_0_0)_padding-box,_linear-gradient(white_0_0)] hover:bg-gray-800/60">
-                      <span className="bg-linear-to-r from-indigo-500 to-indigo-200 bg-clip-text text-transparent">
-                        Warm-up
-                      </span>
-                    </span>
                   </div>
                   <p className="text-indigo-200/65">
                     Mental health conditions affecting behavior and cognition (e.g., depression, schizophrenia).
@@ -88,6 +89,12 @@ export default function Workflows() {
               href="/patients/2"
             >
               <div className="relative z-20 h-full overflow-hidden rounded-[inherit] bg-gray-950 after:absolute after:inset-0 after:bg-linear-to-br after:from-gray-900/50 after:via-gray-800/25 after:to-gray-900/50">
+                {/* Difficulty tag */}
+                <div className="absolute left-6 top-6 z-30">
+                  <span className="btn-sm bg-linear-to-t from-indigo-600 to-indigo-500 bg-[length:100%_100%] bg-[bottom] py-[5px] px-2.5 text-xs text-white shadow-[inset_0px_1px_0px_--theme(--color-white/.16)] hover:bg-[length:100%_150%] rounded-full">
+                    Advanced
+                  </span>
+                </div>
                 {/* Arrow */}
                 <div
                   className="absolute right-6 top-6 flex h-8 w-8 items-center justify-center rounded-full border border-gray-700/50 bg-gray-800/65 text-gray-200 opacity-0 transition-opacity group-hover/card:opacity-100"
@@ -134,6 +141,12 @@ export default function Workflows() {
               href="/patients/3"
             >
               <div className="relative z-20 h-full overflow-hidden rounded-[inherit] bg-gray-950 after:absolute after:inset-0 after:bg-linear-to-br after:from-gray-900/50 after:via-gray-800/25 after:to-gray-900/50">
+                {/* Difficulty tag */}
+                <div className="absolute left-6 top-6 z-30">
+                  <span className="btn-sm bg-linear-to-t from-indigo-600 to-indigo-500 bg-[length:100%_100%] bg-[bottom] py-[5px] px-2.5 text-xs text-white shadow-[inset_0px_1px_0px_--theme(--color-white/.16)] hover:bg-[length:100%_150%] rounded-full">
+                    Challenging
+                  </span>
+                </div>
                 {/* Arrow */}
                 <div
                   className="absolute right-6 top-6 flex h-8 w-8 items-center justify-center rounded-full border border-gray-700/50 bg-gray-800/65 text-gray-200 opacity-0 transition-opacity group-hover/card:opacity-100"
@@ -180,6 +193,12 @@ export default function Workflows() {
               href="/patients/4"
             >
               <div className="relative z-20 h-full overflow-hidden rounded-[inherit] bg-gray-950 after:absolute after:inset-0 after:bg-linear-to-br after:from-gray-900/50 after:via-gray-800/25 after:to-gray-900/50">
+                {/* Difficulty tag */}
+                <div className="absolute left-6 top-6 z-30">
+                  <span className="btn-sm bg-linear-to-t from-indigo-600 to-indigo-500 bg-[length:100%_100%] bg-[bottom] py-[5px] px-2.5 text-xs text-white shadow-[inset_0px_1px_0px_--theme(--color-white/.16)] hover:bg-[length:100%_150%] rounded-full">
+                    Tricky
+                  </span>
+                </div>
                 {/* Arrow */}
                 <div
                   className="absolute right-6 top-6 flex h-8 w-8 items-center justify-center rounded-full border border-gray-700/50 bg-gray-800/65 text-gray-200 opacity-0 transition-opacity group-hover/card:opacity-100"
@@ -226,6 +245,12 @@ export default function Workflows() {
               href="/patients/5"
             >
               <div className="relative z-20 h-full overflow-hidden rounded-[inherit] bg-gray-950 after:absolute after:inset-0 after:bg-linear-to-br after:from-gray-900/50 after:via-gray-800/25 after:to-gray-900/50">
+                {/* Difficulty tag */}
+                <div className="absolute left-6 top-6 z-30">
+                  <span className="btn-sm bg-linear-to-t from-indigo-600 to-indigo-500 bg-[length:100%_100%] bg-[bottom] py-[5px] px-2.5 text-xs text-white shadow-[inset_0px_1px_0px_--theme(--color-white/.16)] hover:bg-[length:100%_150%] rounded-full">
+                    Warm-Up
+                  </span>
+                </div>
                 {/* Arrow */}
                 <div
                   className="absolute right-6 top-6 flex h-8 w-8 items-center justify-center rounded-full border border-gray-700/50 bg-gray-800/65 text-gray-200 opacity-0 transition-opacity group-hover/card:opacity-100"
@@ -272,6 +297,12 @@ export default function Workflows() {
               href="/patients/6"
             >
               <div className="relative z-20 h-full overflow-hidden rounded-[inherit] bg-gray-950 after:absolute after:inset-0 after:bg-linear-to-br after:from-gray-900/50 after:via-gray-800/25 after:to-gray-900/50">
+                {/* Difficulty tag */}
+                <div className="absolute left-6 top-6 z-30">
+                  <span className="btn-sm bg-linear-to-t from-indigo-600 to-indigo-500 bg-[length:100%_100%] bg-[bottom] py-[5px] px-2.5 text-xs text-white shadow-[inset_0px_1px_0px_--theme(--color-white/.16)] hover:bg-[length:100%_150%] rounded-full">
+                    Beginner
+                  </span>
+                </div>
                 {/* Arrow */}
                 <div
                   className="absolute right-6 top-6 flex h-8 w-8 items-center justify-center rounded-full border border-gray-700/50 bg-gray-800/65 text-gray-200 opacity-0 transition-opacity group-hover/card:opacity-100"
@@ -318,6 +349,12 @@ export default function Workflows() {
               href="/patients/7"
             >
               <div className="relative z-20 h-full overflow-hidden rounded-[inherit] bg-gray-950 after:absolute after:inset-0 after:bg-linear-to-br after:from-gray-900/50 after:via-gray-800/25 after:to-gray-900/50">
+                {/* Difficulty tag */}
+                <div className="absolute left-6 top-6 z-30">
+                  <span className="btn-sm bg-linear-to-t from-indigo-600 to-indigo-500 bg-[length:100%_100%] bg-[bottom] py-[5px] px-2.5 text-xs text-white shadow-[inset_0px_1px_0px_--theme(--color-white/.16)] hover:bg-[length:100%_150%] rounded-full">
+                    Intermediate
+                  </span>
+                </div>
                 {/* Arrow */}
                 <div
                   className="absolute right-6 top-6 flex h-8 w-8 items-center justify-center rounded-full border border-gray-700/50 bg-gray-800/65 text-gray-200 opacity-0 transition-opacity group-hover/card:opacity-100"
@@ -364,6 +401,12 @@ export default function Workflows() {
               href="/patients/8"
             >
               <div className="relative z-20 h-full overflow-hidden rounded-[inherit] bg-gray-950 after:absolute after:inset-0 after:bg-linear-to-br after:from-gray-900/50 after:via-gray-800/25 after:to-gray-900/50">
+                {/* Difficulty tag */}
+                <div className="absolute left-6 top-6 z-30">
+                  <span className="btn-sm bg-linear-to-t from-indigo-600 to-indigo-500 bg-[length:100%_100%] bg-[bottom] py-[5px] px-2.5 text-xs text-white shadow-[inset_0px_1px_0px_--theme(--color-white/.16)] hover:bg-[length:100%_150%] rounded-full">
+                    Advanced
+                  </span>
+                </div>
                 {/* Arrow */}
                 <div
                   className="absolute right-6 top-6 flex h-8 w-8 items-center justify-center rounded-full border border-gray-700/50 bg-gray-800/65 text-gray-200 opacity-0 transition-opacity group-hover/card:opacity-100"
@@ -429,7 +472,7 @@ export default function Workflows() {
                 </div>
                 {/* Content */}
                 <div className="flex h-full items-center justify-center p-6">
-                  <h3 className="animate-[gradient_6s_linear_infinite] bg-[linear-gradient(to_right,var(--color-gray-200),var(--color-indigo-200),var(--color-gray-50),var(--color-indigo-300),var(--color-gray-200))] bg-[length:200%_auto] bg-clip-text font-nacelle text-8xl font-semibold text-transparent">
+                  <h3 className="animate-[gradient_6s_linear_infinite] bg-[linear-gradient(to_right,var(--color-gray-200),var(--color-indigo-200),var(--color-gray-50),var(--color-indigo-300),var(--color-gray-200))] bg-[length:200%_auto] bg-clip-text font-nacelle text-6xl font-semibold text-transparent">
                     100+
                   </h3>
                 </div>
