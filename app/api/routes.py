@@ -61,19 +61,20 @@ async def send_webhook_form(
     # Convert form data into the expected WebhookData structure
     data = {
         "patient": patient,
-        "case_study": case_study,
+        "case-study": case_study,
         "history": [
             {"type": "user", "message": user_message},
             {"type": "patient", "message": patient_message}
         ],
-        "last_message": last_message
+        "last-message": last_message
     }
     
     webhook_url = settings.WEBHOOK_URL
-    print(webhook_url)
+    # print(webhook_url)
     
     try:
-        async with httpx.AsyncClient(follow_redirects=True) as client:
+        async with httpx.AsyncClient() as client:
+            # print(data)
             response = await client.post(webhook_url, json=data)
             response.raise_for_status()  # raises an exception for non-2xx responses
         return {"status": "success"}
