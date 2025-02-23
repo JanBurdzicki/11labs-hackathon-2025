@@ -28,9 +28,6 @@ import {
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-// Hook do obsługi chatu (zamiast `ai/react` -> `@ai-sdk/react`):
-import { useChat } from "@ai-sdk/react";
-
 // Definiujemy sobie listę akcji (ikony) dostępnych na końcu wiadomości asystenta
 const ChatAiIcons = [
   {
@@ -49,31 +46,85 @@ const ChatAiIcons = [
 
 export default function PatientChatPage() {
   const { patientId } = useParams() as { patientId: string };
-
-  // Stan do kontrolowania "czy aktualnie generuje się odpowiedź"
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Hook z biblioteki ai-sdk (lub innej) obsługujący chat
-  const {
-    messages,
-    setMessages,
-    input,
-    handleInputChange,
-    handleSubmit,
-    isLoading,
-    reload,
-  } = useChat({
-    onResponse(response) {
-      if (response) {
-        console.log("AI response:", response);
-        setIsGenerating(false);
-      }
-    },
-    onError(error) {
-      console.error("AI error:", error);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Handle input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value);
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  if (!input.trim() || isLoading) return;
+
+  setIsLoading(true);
+  setIsGenerating(true);
+
+  // Add user message immediately
+  const userMessage: Message = { role: 'user', content: input };
+  setMessages(prev => [...prev, userMessage]);
+  setInput('');
+
+  try {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [...messages, userMessage],
+        patientId
+      }),
+    });
+
+    if (!response.ok) throw new Error('Failed to fetch response');
+
+    const data = await response.json();
+    const assistantMessage: Message = { role: 'assistant', content: data.content };
+    setMessages(prev => [...prev, assistantMessage]);
+  } catch (error) {
+    console.error('AI error:', error);
+  } finally {
+    setIsLoading(false);
+    setIsGenerating(false);
+  }};
+
+  // Reload/regenerate last response
+  const reload = async () => {
+    if (messages.length < 2) return;
+
+    setIsLoading(true);
+    setIsGenerating(true);
+
+    // Remove last assistant message
+    const lastUserMessageIndex = messages.length - 2;
+    const newMessages = messages.slice(0, messages.length - 1);
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: newMessages,
+          patientId
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch response');
+
+      const data = await response.json();
+      const assistantMessage: Message = { role: 'assistant', content: data.content };
+      setMessages([...newMessages, assistantMessage]);
+    } catch (error) {
+      console.error('Error reloading:', error);
+    } finally {
+      setIsLoading(false);
       setIsGenerating(false);
-    },
-  });
+    }
+  };
 
   // Refy do przewijania wiadomości i do formularza
   const messagesRef = useRef<HTMLDivElement>(null);
@@ -289,30 +340,6 @@ export default function PatientChatPage() {
             </Button>
           </div>
         </form>
-
-        {/* Stopka z linkiem do GitHuba */}
-        <div className="pt-4 flex gap-2 items-center justify-center">
-          <p className="text-xs">
-            <a
-              href="https://github.com/jakobhoeg/shadcn-chat"
-              className="font-bold inline-flex flex-1 justify-center gap-1 leading-4 hover:underline"
-            >
-              shadcn-chat
-              <svg
-                aria-hidden="true"
-                height="7"
-                viewBox="0 0 6 6"
-                width="7"
-                className="opacity-70"
-              >
-                <path
-                  d="M1.25215 5.54731L0.622742 4.9179L3.78169 1.75597H1.3834L1.38936 0.890915H5.27615V4.78069H4.40513L4.41109 2.38538L1.25215 5.54731Z"
-                  fill="currentColor"
-                ></path>
-              </svg>
-            </a>
-          </p>
-        </div>
       </div>
     </main>
   );
