@@ -77,7 +77,7 @@ async def send_webhook_form(
             # print(data)
             response = await client.post(webhook_url, json=data)
             response.raise_for_status()  # raises an exception for non-2xx responses
-        return {"status": "success"}
+            return response.json()
     except httpx.HTTPError as http_err:
         # Log the HTTP error properly instead of printing debug remnants.
         print(f"Webhook HTTP error: {http_err}") 
