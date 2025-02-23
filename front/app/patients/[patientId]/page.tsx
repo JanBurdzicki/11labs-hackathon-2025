@@ -34,14 +34,66 @@ import remarkGfm from "remark-gfm";
 
 // Stały tekst pacjenta (wyświetlamy go w UI, ale nie wysyłamy do backendu)
 const PATIENT_MESSAGE = `
-Hello, I'm Anna Novak. I'm 63 years old and have been experiencing a mild cough for the past 5 days. 
-I also have a slight fever (around 37.8°C) and occasional headaches. I'm worried it might be the flu 
-or something more serious. I also have mild hypertension, so I'm cautious about any new symptoms.
-Could you help me figure out what I should do next?
-`.trim();
+Hi, I'm Anna Novak. I'm 63 years old and I’ve been feeling dizzy and unsteady, with occasional numbness in my hands and feet. I’ve also been more forgetful lately. I’m not in pain, but I feel more tired. Should I be concerned?`.trim();
 
 // Stały case study (wysyłany do backendu w polu `case_study` za każdym razem)
-const CASE_STUDY = PATIENT_MESSAGE;
+const CASE_STUDY = `
+Chief Complaint:
+The patient reports experiencing progressive neurological symptoms over the past few months, including episodes of dizziness, occasional balance disturbances, and intermittent numbness in the hands and feet. Additionally, they describe mild memory difficulties, such as forgetting recent conversations or misplacing objects.
+
+History of Present Illness:
+
+Symptoms started approximately six months ago with occasional dizziness and lightheadedness. The frequency of these episodes has increased, particularly when standing up quickly.
+The patient notes a gradual onset of balance issues, reporting feeling unsteady when walking, especially on uneven surfaces. No reported falls but increased reliance on handrails.
+Reports occasional tingling and numbness in the hands and feet, particularly in the evening. No known injuries or new medications that could explain these sensations.
+Family members have noticed the patient occasionally struggling to recall words mid-conversation or repeating questions.
+No significant headaches, loss of consciousness, or sudden episodes of confusion.
+No difficulty swallowing or major speech disturbances.
+Associated Symptoms:
+
+Mild fatigue but no severe weakness.
+Occasional muscle cramps, more noticeable in the legs.
+No reported visual disturbances, seizures, or loss of coordination beyond balance difficulties.
+No significant mood changes, though the patient admits to some frustration due to memory lapses.
+Review of Systems:
+
+Cardiovascular: Reports mild hypertension, but no chest pain, palpitations, or shortness of breath.
+Gastrointestinal: No nausea, vomiting, or recent changes in bowel habits.
+Genitourinary: No issues with urination or incontinence.
+Respiratory: No chronic cough or difficulty breathing.
+Musculoskeletal: No recent falls, but some mild joint stiffness in the mornings.
+Additional Notes:
+The patient's symptoms suggest a possible progressive neurological disorder, such as early-stage neurodegenerative disease (e.g., Parkinson's disease, mild cognitive impairment, or peripheral neuropathy). Further evaluation is recommended, including neurological examination, blood tests (to rule out vitamin deficiencies or metabolic causes), and imaging (MRI/CT brain) to assess structural changes.
+
+Next Steps:
+Neurological assessment (gait, reflexes, coordination tests)
+Cognitive screening (MMSE/MoCA)
+Routine blood work (B12, thyroid function, glucose)
+MRI brain to rule out structural abnormalities
+Follow-up visit in four weeks to review findings and adjust treatment plan accordingly
+Blood Test Results (Dodane wyniki krwi):
+
+Complete Blood Count (CBC):
+
+Hemoglobin (Hb): 11.5 g/dL (Slightly below the normal range)
+Hematocrit (Hct): 34% (Below normal limits)
+Mean Corpuscular Volume (MCV): 105 fL (Elevated, indicating macrocytosis)
+White Blood Cell (WBC) Count: 6.2 x 10³/µL (Within normal limits)
+Platelet Count: 240 x 10³/µL (Normal)
+Metabolic Panel:
+
+Glucose: 98 mg/dL (Normal)
+Electrolytes (Sodium, Potassium, Chloride, Bicarbonate): Within normal limits
+Creatinine: 0.9 mg/dL (Normal)
+Blood Urea Nitrogen (BUN): 14 mg/dL (Normal)
+Thyroid Function:
+
+TSH: 2.1 mIU/L (Normal)
+Vitamin Levels:
+
+Vitamin B12: 180 pg/mL (Below the normal range of approximately 200–900 pg/mL, suggesting deficiency)
+Folate: 6.5 ng/mL (Normal)
+`;
 
 // Typ wiadomości w stanie frontendu
 interface Message {
@@ -89,25 +141,40 @@ export default function PatientChatPage() {
   }, [messages]);
 
   // Funkcja do odczytu tekstu przez TTS
-  const speakText = (text: string) => {
-    console.log("Speaking:", text);
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "en-US"; // ustaw język na angielski
-    // Anulujemy poprzednie wypowiedzi przed rozpoczęciem nowej
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
-  };
-  
-  // Przy każdej nowej wiadomości od asystenta, odczytujemy ją na głos
-  useEffect(() => {
-    if (messages.length > 0) {
-      const lastMessage = messages[messages.length - 1];
-      if (lastMessage.role === "assistant") {
-        speakText(lastMessage.content);
-      }
+// Funkcja do odczytu tekstu przez TTS przy użyciu API backendu
+const speakText = async (text: string) => {
+  console.log("Fetching TTS audio for:", text);
+  try {
+    const response = await fetch("http://172.20.10.5:8000/api/tts", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ text }),
+    });
+    if (!response.ok) {
+      throw new Error("Failed to fetch TTS audio");
     }
-  }, [messages]);
-  
+    const audioBlob = await response.blob();
+    const audioUrl = URL.createObjectURL(audioBlob);
+    const audio = new Audio(audioUrl);
+    audio.play();
+  } catch (error) {
+    console.error("TTS error:", error);
+  }
+};
+
+// W useEffect wywołujemy asynchronicznie funkcję speakText po otrzymaniu wiadomości asystenta
+useEffect(() => {
+  if (messages.length > 0) {
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage.role === "assistant") {
+      (async () => {
+        await speakText(lastMessage.content);
+      })();
+    }
+  }
+}, [messages]);
   /**
    * Obsługa wysłania wiadomości przez użytkownika (lekarza).
    */
@@ -267,62 +334,42 @@ export default function PatientChatPage() {
   // OBSŁUGA MIKROFONU
   // ---------------------------------------------
   const handleMicClick = async () => {
-    if (!isRecording) {
-      // Rozpoczynamy nagrywanie
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        // Ustawiamy mimeType jawnie – to pomoże uzyskać plik z kodekiem opus
-        const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm; codecs=opus' });
-        setMediaRecorder(recorder);
-        setAudioChunks([]); // czyścimy poprzednie
-
-        recorder.start();
-        setIsRecording(true);
-
-        recorder.ondataavailable = (e) => {
-          if (e.data.size > 0) {
-            setAudioChunks((prev) => [...prev, e.data]);
-          }
-        };
-
-        recorder.onstop = async () => {
-          setIsRecording(false);
-
-          // Tworzymy Blob z zebranych kawałków
-          const blob = new Blob(audioChunks, { type: "audio/webm" });
-          setAudioChunks([]);
-
-          // Wysyłamy do backendu
-          const formData = new FormData();
-          formData.append("audio_file", blob, "recording.webm");
-
-          try {
-            const res = await fetch("http://172.20.10.5:8000/api/stt_whisper", {
-              method: "POST",
-              body: formData,
-            });
-            if (!res.ok) {
-              console.error("STT error", await res.text());
-              return;
-            }
-            const data = await res.json();
-            console.log("Transcribed text:", data.transcript);
-
-            // Wstawiamy transkrypcję do inputa
-            setInput(data.transcript || "");
-          } catch (err) {
-            console.error("STT fetch error:", err);
-          }
-        };
-      } catch (err) {
-        console.error("Mic error:", err);
-      }
-    } else {
-      // Jeśli nagrywamy, kliknięcie zatrzymuje nagrywanie
-      mediaRecorder?.stop();
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Speech recognition is not supported in your browser.");
+      return;
     }
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US"; // ustaw język na angielski
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    
+    recognition.onstart = () => {
+      console.log("Speech recognition started");
+      // Możesz ustawić stan, jeśli chcesz zmienić wygląd przycisku
+      setIsRecording(true);
+    };
+  
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      console.log("Recognized speech:", transcript);
+      // Ustawiamy rozpoznany tekst w polu input
+      setInput(transcript);
+    };
+  
+    recognition.onerror = (event) => {
+      console.error("Speech recognition error:", event.error);
+      alert("Speech recognition error: " + event.error);
+    };
+  
+    recognition.onend = () => {
+      console.log("Speech recognition ended");
+      setIsRecording(false);
+    };
+  
+    recognition.start();
   };
-
+  
   return (
     <div className="flex items-center justify-center p-4">
       <main className="mt-6 flex h-[85vh] w-full max-w-6xl flex-col bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
