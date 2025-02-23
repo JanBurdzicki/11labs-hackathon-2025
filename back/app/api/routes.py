@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Form, File, UploadFile
+from fastapi import APIRouter, HTTPException, File, UploadFile
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional
@@ -67,11 +67,12 @@ async def send_webhook_form(data: WebhookData):
     }
     """
     # Przygotowujemy dane do wysłania do "właściwego" webhooka:
+    print("Received webhook data:", data, flush=True)
     payload = {
         "patient": data.patient,
         "case-study": data.case_study,   # Uwaga: w oryginale klucz był "case-study", jeśli webhook oczekuje myślnika
         "history": [
-            {"type": h.type, "message": h.message} for h in data.history
+            {"type": h["type"], "message": h["message"]} for h in list(data.history)
         ],
         "last-message": data.last_message
     }
